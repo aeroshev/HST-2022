@@ -1,9 +1,11 @@
 import argparse
 
 import numpy as np
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--size', type=int)
+parser.add_argument('-o', '--output', type=str)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-b', '--bytes', type=str, nargs='+')
 group.add_argument('-q', '--quantity', type=int)
@@ -34,13 +36,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     size = args.size
     quantity = args.quantity or calculate_q(' '.join(args.bytes), size)
+    output_file = args.output or "matrixes.data"
 
     print(f"Quantity - {quantity}")
     print(f"Size - {size}")
 
-    with open("../data/matrixes.dat", "w") as file:
+    with open(output_file, "w") as file:
         file.write(f"{size} {quantity}\n")
-        for _ in range(quantity):
+        for _ in tqdm(range(quantity)):
             matrix = np.matrix(random_matrix(size, 100_000))
             for line in matrix:
                 np.savetxt(file, line, fmt='%.4f')
