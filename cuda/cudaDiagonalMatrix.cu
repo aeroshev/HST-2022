@@ -26,58 +26,66 @@ void printMatrix(float *matrix, size_t N) {
 
 
 __global__ void matrixDiagonal(float *A, float *sum, int N) {
-    int row = blockIdx.x * blockDim.x + threadIdx.x;
-    int column = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (row < column) {
-        *sum += A[row * N + column];
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int column = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row < N && column < N) {
+        if (row < column) {
+            sum[row * N + column] = A[row * N + column];
+        } else {
+            sum[row * N + column] = 0;
+        }
     }
-
  }
 
 
 int main(int argc, char *argv[]) {
-    int N = 8;
+    int N = 4;
     size_t matrixSize = sizeof(float) * N * N;
-    size_t floatSize = sizeof(float);
 
     // Allocate matrix on CPU
     float *h_matrix_A = (float *)malloc(matrixSize);
-    for (size_t i = 0; i < N * N; i ++) {
+    for (size_t i = 0; i < N * N; i++) {
         // h_matrix_A[i] = rand() / (float)RAND_MAX;
         h_matrix_A[i] = 1;  // debug
     }
     printMatrix(h_matrix_A, N);
 
-    float *h_sum = (float *)calloc(1, floatSize);
+    float *h_matrix_sum = (float *)malloc(matrixSize);
 
     // Allocate memory to GPU Device
     float *d_matrix_A = NULL;
     CUDA_CHECK(cudaMalloc((void **)&d_matrix_A, matrixSize));
 
-    float *d_sum = NULL;
-    CUDA_CHECK(cudaMalloc((void **)&d_sum, floatSize));
+    float *d_matrix_sum = NULL;
+    CUDA_CHECK(cudaMalloc((void **)&d_matrix_sum, matrixSize));
 
     // Copy data from CPU to GPU
     CUDA_CHECK(cudaMemcpy(d_matrix_A, h_matrix_A, matrixSize, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cudaMemcpy(d_sum, h_sum, floatSize, cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_matrix_sum, h_matrix_sum, matrixSize, cudaMemcpyHostToDevice));
 
     // Launch kernel
-    dim3 threadsPerBlock(N / 2, N / 2);
+    dim3 threadsPerBlock(2, 2);
     dim3 numBlocks(N / threadsPerBlock.x, N / threadsPerBlock.y);
-    matrixDiagonal<<<numBlocks, threadsPerBlock>>>(d_matrix_A, d_sum, N);
+    matrixDiagonal<<<numBlocks, threadsPerBlock>>>(d_matrix_A, d_matrix_sum, N);
 
     // Copy result from GPU to CPU
-    CUDA_CHECK(cudaMemcpy(h_sum, d_sum, floatSize, cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(h_matrix_sum, d_matrix_sum, matrixSize, cudaMemcpyDeviceToHost));
 
-    cout << "Result of sum:" << *h_sum << "\n";
+    float sum = 0;
+    for (int i = 0; i < N * N; i++) {
+        sum += h_matrix_sum[i];
+    }
+
+    cout << "Result of sum:" << sum << "\n";
 
     // Free memory
     CUDA_CHECK(cudaFree(d_matrix_A));
-    CUDA_CHECK(cudaFree(d_sum));
+    CUDA_CHECK(cudaFree(d_matrix_sum));
 
     free(h_matrix_A);
-    free(h_sum);
+    free(h_matrix_sum);
 
     return 0;
 }
