@@ -51,9 +51,6 @@ void Executor::execute() {
     /*
     Выполняем нашу операцию над всеми матрицами
     */
-    // std::cout << "Run execute" << '\n';
-    // std::cout << "Size pool " << this->pool.size() << '\n';
-
     auto start = high_resolution_clock::now();
 
     // OpenMP
@@ -64,7 +61,6 @@ void Executor::execute() {
     #endif
     for (i = 0; i < this->pool.size(); i++) {
         this->results.push_back(this->pool[i]->count_under_diagonal());
-        // std::cout << this->results[i] << '\n';
     }
 
     auto stop = high_resolution_clock::now();
@@ -73,10 +69,20 @@ void Executor::execute() {
     return;
 }
 
+void Executor::c_execute(double **input_array, double* output_array, size_t N, size_t len_array) {
+    // // OpenMP
+    // size_t i;
+    // #if defined(_OPENMP)
+    //     size_t nthreads = 16;
+    //     #pragma omp parallel for private(i) num_threads(nthreads)
+    // #endif
+    // for (i = 0; i < len_array; i++) {
+    //     output_array[i] = Matrix::c_count_under_diagonal(input_array[i], N);
+    // }
+}
+
 void Executor::save_result_to_file(std::ofstream& file_stream) {
-    // std::cout << "Run to save" << '\n';
     for (auto const& result: this->results) {
-        // std::cout << result << '\n';
         file_stream << result << '\n';
     }
 

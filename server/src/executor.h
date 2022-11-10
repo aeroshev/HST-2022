@@ -26,6 +26,8 @@ class Executor {
         void setup_from_file(std::ifstream&);
         void execute();
         void save_result_to_file(std::ofstream&);
+        
+        static void c_execute(double**, double*, size_t, size_t);
 };
 
 #endif
