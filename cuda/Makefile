@@ -299,45 +299,45 @@ MPI_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
 MPI_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 
 # Common includes and paths for CUDA
-INCLUDES  := -I/root/NVIDIA_CUDA-11.1_Samples/common/inc
+INCLUDES  := -I/root/NVIDIA_CUDA-11.1_Samples/common/inc -I/root/yakovenko/openmpi/include
 LIBRARIES :=
 
 ################################################################################
 
 # MPI check and binaries
-# MPICXX ?= $(shell which mpicxx 2>/dev/null)
+MPICXX ?= "/root/yakovenko/openmpi/bin/mpic++"
 
-# ifneq ($(TARGET_ARCH),$(HOST_ARCH))
-#       $(info -----------------------------------------------------------------------------------------------)
-#       $(info WARNING - Cross Compilation not supported for MPI Samples.)
-#       $(info -----------------------------------------------------------------------------------------------)
-#       $(info   Waiving the build )
-#       $(info   This will be a dry-run of the Makefile.)
-#       $(info   For more information on how to set up your environment to build and run this )
-#       $(info   sample, please refer the CUDA Samples documentation and release notes)
-#       $(info -----------------------------------------------------------------------------------------------)
-#       MPICXX=mpicxx
-#       SAMPLE_ENABLED := 0
-# endif
+ifneq ($(TARGET_ARCH),$(HOST_ARCH))
+      $(info -----------------------------------------------------------------------------------------------)
+      $(info WARNING - Cross Compilation not supported for MPI Samples.)
+      $(info -----------------------------------------------------------------------------------------------)
+      $(info   Waiving the build )
+      $(info   This will be a dry-run of the Makefile.)
+      $(info   For more information on how to set up your environment to build and run this )
+      $(info   sample, please refer the CUDA Samples documentation and release notes)
+      $(info -----------------------------------------------------------------------------------------------)
+      MPICXX=mpicxx
+      SAMPLE_ENABLED := 0
+endif
 
-# ifeq ($(MPICXX),)
-#       $(info -----------------------------------------------------------------------------------------------)
-#       $(info WARNING - No MPI compiler found.)
-#       $(info -----------------------------------------------------------------------------------------------)
-#       $(info   CUDA Sample "simpleMPI" cannot be built without an MPI Compiler.)
-#       $(info   This will be a dry-run of the Makefile.)
-#       $(info   For more information on how to set up your environment to build and run this )
-#       $(info   sample, please refer the CUDA Samples documentation and release notes)
-#       $(info -----------------------------------------------------------------------------------------------)
-#       MPICXX=mpicxx
-#       SAMPLE_ENABLED := 0
-# endif
+ifeq ($(MPICXX),)
+      $(info -----------------------------------------------------------------------------------------------)
+      $(info WARNING - No MPI compiler found.)
+      $(info -----------------------------------------------------------------------------------------------)
+      $(info   CUDA Sample "simpleMPI" cannot be built without an MPI Compiler.)
+      $(info   This will be a dry-run of the Makefile.)
+      $(info   For more information on how to set up your environment to build and run this )
+      $(info   sample, please refer the CUDA Samples documentation and release notes)
+      $(info -----------------------------------------------------------------------------------------------)
+      MPICXX=mpicxx
+      SAMPLE_ENABLED := 0
+endif
 
 # Gencode arguments
 ifeq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),armv7l aarch64 sbsa))
-SMS ?= 53 61 70 72 75 80 86 87 90
+SMS ?= 53 61 70 72 75 80 86 87
 else
-SMS ?= 35 37 50 52 60 61 70 75 80 86 90
+SMS ?= 35 37 50 52 60 61 70 75 80 86
 endif
 
 ifeq ($(SMS),)
@@ -356,7 +356,7 @@ GENCODE_FLAGS += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 endif
 endif
 
-ALL_CCFLAGS += --threads 0 --std=c++11
+ALL_CCFLAGS +=  --std=c++11
 
 LIBSIZE :=
 ifneq ($(TARGET_OS),darwin)
@@ -386,13 +386,13 @@ else
 endif
 
 diagonalMatrix_mpi.o:diagonalMatrix.cpp
-	$(EXEC) g++ -std=c++11 $(INCLUDES) $(MPI_CCFLAGS) -o $@ -c $<
+	$(EXEC) $(MPICXX) -std=c++11 $(INCLUDES) $(MPI_CCFLAGS) -o $@ -c $<
 
 diagonalMatrix.o:diagonalMatrix.cu
 	$(EXEC) $(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 diagonalMatrix: diagonalMatrix_mpi.o diagonalMatrix.o
-	$(EXEC) g++ -std=c++11 -o $@ $+ $(LIBRARIES)
+	$(EXEC) $(MPICXX) -std=c++11 $(MPI_LDFLAGS) -o $@ $+ $(LIBRARIES)
 	$(EXEC) mkdir -p ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 	$(EXEC) cp $@ ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)
 
@@ -402,7 +402,7 @@ run: build
 testrun: build
 
 clean:
-	rm -f simpleMPI simpleMPI_mpi.o simpleMPI.o
-	rm -rf ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/simpleMPI
+	rm -f diagonalMatrix diagonalMatrix_mpi.o diagonalMatrix.o
+	rm -rf ../../../bin/$(TARGET_ARCH)/$(TARGET_OS)/$(BUILD_TYPE)/diagonalMatrix
 
 clobber: clean

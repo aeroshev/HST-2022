@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/root/NVIDIA_CUDA-11.1_Samples/common/inc"
+                "/root/NVIDIA_CUDA-11.1_Samples/common/inc",
+                "/root/yakovenko/openmpi/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

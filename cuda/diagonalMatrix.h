@@ -1,6 +1,7 @@
 #include <vector>
 #include <fstream>
 #include <tuple>
+#include <mpi.h>
 
 using namespace std;
 
